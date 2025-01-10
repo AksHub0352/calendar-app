@@ -11,7 +11,6 @@ interface CalendarGridProps {
 
 export const CalendarGrid: React.FC<CalendarGridProps> = ({
   days,
-  events,
   filteredEvents,
   onDateClick,
 }) => {

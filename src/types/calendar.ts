@@ -8,9 +8,8 @@ export interface Event {
   color: string;
   tags: string[];
   recurrence?: {
-    type: 'daily' | 'weekly' | 'monthly' | 'yearly';
-    interval: number;
-    endDate?: string;
+    enabled: boolean; 
+    endDate: string; 
   };
   }
   
@@ -20,5 +19,10 @@ export interface Event {
     endTime: string;
     description: string;
     color: string;
+    tags: string[]; 
+    recurrence: {
+      enabled: boolean;
+      endDate: string;
+    };
   }
   

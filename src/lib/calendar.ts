@@ -1,35 +1,27 @@
-
 import { Event } from "@/types/calendar";
 
-
 export const generateRecurringEvents = (event: Event, endDate: Date): Event[] => {
-  if (!event.recurrence) return [event];
+  if (!event.recurrence || !event.recurrence.enabled) {
+    return [event]; // If no recurrence, return a single event
+  }
 
   const events: Event[] = [];
   const startDate = new Date(event.date);
   let currentDate = new Date(startDate);
 
-  while (currentDate <= endDate) {
+  // Convert the recurrence end date to a Date object
+  const recurrenceEndDate = endDate;
+
+  while (currentDate <= recurrenceEndDate) {
+    // Add the event with the updated date
     events.push({
       ...event,
-      id: Date.now() + Math.random(),
-      date: currentDate.toDateString(),
+      id: Date.now() + Math.random(), // Use a unique ID for each event
+      date: currentDate.toDateString(), // Set the date for the current event
     });
 
-    switch (event.recurrence.type) {
-      case 'daily':
-        currentDate.setDate(currentDate.getDate() + event.recurrence.interval);
-        break;
-      case 'weekly':
-        currentDate.setDate(currentDate.getDate() + (7 * event.recurrence.interval));
-        break;
-      case 'monthly':
-        currentDate.setMonth(currentDate.getMonth() + event.recurrence.interval);
-        break;
-      case 'yearly':
-        currentDate.setFullYear(currentDate.getFullYear() + event.recurrence.interval);
-        break;
-    }
+    // Increment the current date for the next recurrence
+    currentDate.setDate(currentDate.getDate() + 1); // Adjust this if you want specific recurrence logic (e.g., weekly, monthly)
   }
 
   return events;
@@ -43,22 +35,22 @@ export const getDaysInMonth = (date: Date) => {
   const lastDay = new Date(year, month + 1, 0);
 
   const days = [];
-  const startPadding = firstDay.getDay();
+  const startPadding = firstDay.getDay(); // Get the starting day of the week (e.g., Sunday)
 
- 
+  // Add padding for previous month days if the first day is not Sunday
   for (let i = 0; i < startPadding; i++) {
     const prevDate = new Date(year, month, -i);
     days.unshift({
       date: prevDate,
-      isPadding: true
+      isPadding: true,
     });
   }
 
-  
+  // Add the days of the current month
   for (let i = 1; i <= lastDay.getDate(); i++) {
     days.push({
       date: new Date(year, month, i),
-      isPadding: false
+      isPadding: false,
     });
   }
 

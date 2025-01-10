@@ -35,7 +35,7 @@ export const EventDialog: React.FC<EventDialogProps> = ({
   onSave,
 }) => {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={() => onOpenChange(!open)}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>

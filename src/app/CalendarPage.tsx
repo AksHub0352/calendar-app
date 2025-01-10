@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { DndContext, closestCenter, DragEndEvent } from "@dnd-kit/core";
-import { SortableContext, arrayMove } from "@dnd-kit/sortable";
+import { SortableContext } from "@dnd-kit/sortable";
 import { CalendarHeader } from "@/components/calendar/CalendarHeader";
-import { FilterBar } from "@/components/calendar/FilterBar";
 import { EventDialog } from "@/components/calendar/EventDialog";
 import { EventList } from "@/components/calendar/EventList";
 import { ViewSelector } from "@/components/calendar/ViewSelector";
@@ -30,20 +29,12 @@ export default function CalendarPage() {
     endTime: "",
     description: "",
     color: "blue",
+    tags: [],
     recurrence: {
       enabled: false,
       endDate: "",
     },
   });
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [availableTags, setAvailableTags] = useState<string[]>([
-    "Work",
-    "Personal",
-    "Important",
-    "Meeting",
-    "Holiday",
-    "Birthday",
-  ]);
 
   useEffect(() => {
     const savedEvents = localStorage.getItem("calendarEvents");
@@ -87,14 +78,19 @@ export default function CalendarPage() {
 
   const handleEditEvent = (event: Event) => {
     setEditingEvent(event);
+
     setNewEvent({
-      title: event.title,
-      startTime: event.startTime,
-      endTime: event.endTime,
-      description: event.description,
-      color: event.color,
-      recurrence: event.recurrence || { enabled: false, endDate: "" },
+      title: event.title || "",
+      startTime: event.startTime || "",
+      endTime: event.endTime || "",
+      description: event.description || "",
+      color: event.color || "blue",
+      recurrence: event.recurrence
+        ? { ...event.recurrence }
+        : { enabled: false, endDate: "" },
+      tags: event.tags ? [...event.tags] : [],
     });
+
     setShowEventList(false);
     setShowEventModal(true);
   };
@@ -104,34 +100,27 @@ export default function CalendarPage() {
   };
 
   const handleSaveEvent = () => {
+    if (!selectedDate) return;
+
+    const updatedEvent: Event = {
+      ...newEvent,
+      date: selectedDate.toDateString(),
+      id: editingEvent ? editingEvent.id : Date.now(),
+    };
+
     if (editingEvent) {
       setEvents(
         events.map((event) =>
-          event.id === editingEvent.id ? { ...event, ...newEvent } : event
+          event.id === editingEvent.id ? updatedEvent : event
         )
       );
       setEditingEvent(null);
     } else {
-      if (!selectedDate) return;
-
       if (!newEvent.recurrence.enabled) {
-        setEvents([
-          ...events,
-          {
-            ...newEvent,
-            date: selectedDate.toDateString(),
-            id: Date.now(),
-            tags: [],
-          },
-        ]);
+        setEvents([...events, updatedEvent]);
       } else {
         const recurringEvents = generateRecurringEvents(
-          {
-            ...newEvent,
-            date: selectedDate.toDateString(),
-            id: Date.now(),
-            tags: [],
-          },
+          updatedEvent,
           new Date(newEvent.recurrence.endDate || "2030-12-31")
         );
         setEvents([...events, ...recurringEvents]);
@@ -144,6 +133,7 @@ export default function CalendarPage() {
       endTime: "",
       description: "",
       color: "blue",
+      tags: [],
       recurrence: { enabled: false, endDate: "" },
     });
     setShowEventModal(false);
@@ -191,7 +181,7 @@ export default function CalendarPage() {
     const { active, over } = event;
     if (!over) return;
 
-    const activeEvent = events.find((e) => e.id === active.id);
+    const activeEvent = events.find((e) => e.id === Number(active.id));
     if (!activeEvent) return;
 
     const newDate = new Date(over.id as string);
@@ -255,9 +245,6 @@ export default function CalendarPage() {
         onOpenChange={setShowEventModal}
         onEventChange={setNewEvent}
         onSave={handleSaveEvent}
-        isEditing={!!editingEvent}
-        availableTags={availableTags}
-        onTagsChange={(tags) => setNewEvent({ ...newEvent, tags })}
       />
 
       <EventList
@@ -272,7 +259,7 @@ export default function CalendarPage() {
       />
 
       <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <SortableContext items={events.map((e) => e.id)}>
+        <SortableContext items={events.map((e) => String(e.id))}>
           {events.map((event) => (
             <div key={event.id}>
               <div
